@@ -1,0 +1,88 @@
+name: Update pull request milestone from Jira issue version
+
+on:
+  # workflow_dispatch allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      pull_request_title_prefix:
+        description: 'Specify the pull request key prefix (ex: CE-4001)'
+        required: true
+      version:
+        description: 'Specify the Jira ticket version to update (ex: API-V0.0.2)'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inputs displays
+        run: | 
+          echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
+
+      - name: 'Convert JIRA ticket version to Github milestone number'
+        run: |
+          echo -e "\033[1;33mConverting version to milestone label (ex: API-V0.0.2 -> v0.0.2)...\033[0m"
+
+          milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
+
+          echo -e "\033[1;32m... ✅ milestone_label=$milestone_label\033[0m"
+
+          ###############################################################################################
+
+          echo -e "\033[1;33mGetting milestone number from milestone label (ex: v0.0.2 -> 1)...\033[0m"
+
+          milestone_number=$(\
+          curl --silent -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/maatth/GitHubActionsTriggers/milestones \
+          | jq --arg milestone_label "$milestone_label" '.[] | select(.title == $milestone_label).number')
+
+          # Check if milestone_number is empty
+          if [ -z "$milestone_number" ]; then
+            echo -e "\033[1;31m❌ Milestone not found.\033[0m"
+            exit 1
+          fi
+
+          echo -e "\033[1;32m... ✅ milestone_number=$milestone_number\033[0m"
+
+          ###############################################################################################
+
+          echo -e "\033[1;33mGetting last open pull request number from pull request title prefix (ex: CE-4001 -> 1)...\033[0m"
+
+          pull_request_number=$(curl --silent -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/maatth/GitHubActionsTriggers/pulls?state=open&sort=created&direction=desc" \
+          | jq --arg title_prefix "${{ github.event.inputs.pull_request_title_prefix }}" '.[] | select(.title | contains($title_prefix)).number' | head -n 1);
+
+          # Check if pull_request_number is empty
+          if [ -z "$pull_request_number" ]; then
+            echo -e "\033[1;31m❌ Pull request not found.\033[0m"
+            exit 1
+          fi
+
+          echo -e "\033[1;32m... ✅ pull_request_number=$pull_request_number\033[0m"
+
+          ###############################################################################################
+
+          echo -e "\033[1;33mModifing the milestone of the pull request...\033[0m"
+          
+          curl --silent -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          -X PATCH \
+          -d "{\"milestone\": \"$milestone_number\"}" \
+          https://api.github.com/repos/maatth/GitHubActionsTriggers/issues/$pull_request_number;  # Have to use '/issues/' instead of '/pulls/'
+
+          echo -e "\033[1;32m... ✅ pull request milestone updated\033[0m"
