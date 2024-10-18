@@ -1,15 +1,9 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Mon workflow pour update les milestone
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -29,8 +23,18 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # Extraire les informations du payload envoyé par Jira via Webhook
+      - name: Get Jira Ticket Version
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          jira_version="v1.0.0"
+          pr_number="1"
+          
+          echo "Jira version: $jira_version"
+          echo "PR number: $pr_number"
+
+      - name: Update GitHub PR Milestone
+        run: |
+          curl -u ${{ secrets.GITHUB_USER }}:${{ secrets.GITHUB_TOKEN }} \
+          -X PATCH \
+          -d '{"milestone": "$jira_version"}' \
+          https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number
