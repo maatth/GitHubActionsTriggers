@@ -31,7 +31,7 @@ jobs:
         run: echo Hello, world!
 
       - name: Run a one-line script
-        run: echo voilaa {{github.event.inputs.pull_request_id}}
+        run: echo voilaa ${{ github.event.inputs.pull_request_id }}
         
       # Extraire les informations du payload envoyé par Jira via Webhook
       - name: Get Jira Ticket Version
