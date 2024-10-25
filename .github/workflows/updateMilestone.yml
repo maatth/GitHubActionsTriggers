@@ -30,9 +30,9 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
-      # - name: Print pull_request_id
-      #   run: echo "pull_request_id: ${{ github.event.inputs.pull_request_id }}"
-
+      - name: Run a one-line script
+        run: echo voilaa {{github.event.inputs.pull_request_id}}
+        
       # Extraire les informations du payload envoyé par Jira via Webhook
       - name: Get Jira Ticket Version
         run: |
