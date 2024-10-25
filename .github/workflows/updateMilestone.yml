@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Mon workflow pour update les milestone
+name: Mon workflow pour update les milestones
 
 # Controls when the workflow will run
 on:
@@ -30,8 +30,8 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
-      - name: Print pull_request_id
-        run: echo "pull_request_id: ${{ github.event.inputs.pull_request_id }}"
+      # - name: Print pull_request_id
+      #   run: echo "pull_request_id: ${{ github.event.inputs.pull_request_id }}"
 
       # Extraire les informations du payload envoyé par Jira via Webhook
       - name: Get Jira Ticket Version
