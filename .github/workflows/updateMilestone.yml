@@ -45,7 +45,7 @@ jobs:
           echo "milestone_number=$milestone_number"
           echo "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.inputs.pull_request_id }}"
 
-          curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -X PATCH -d '{"milestone": "$milestone_number"}' https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.inputs.pull_request_id }}
+          curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -X PATCH -d '{"milestone": "2"}' https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.inputs.pull_request_id }}
 
       # Extraire les informations du payload envoyé par Jira via Webhook
       # - name: Get Jira Ticket Version
