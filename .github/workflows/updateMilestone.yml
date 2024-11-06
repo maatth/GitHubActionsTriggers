@@ -1,7 +1,7 @@
 name: Update pull request milestone from Jira issue version
 
 on:
-  # workflow_dispatch will allows you to run this workflow manually from the Actions tab
+  # workflow_dispatch allows to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       pull_request_title_prefix:
@@ -20,26 +20,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks-out our repository under $GITHUB_WORKSPACE, so this job can access it
       - uses: actions/checkout@v4
 
       - name: Inputs displays
         run: | 
-          echo "::notice title={Workflow ran with these inputs} :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
-          echo "::notice file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
+          echo "::notice title=Workflow ran with these inputs:: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
 
       - name: 'Convert JIRA ticket version to Github milestone number'
-        id: convert-milestone-number
+        id: convert-to-milestone-number
         run: |
+          # convert version to milestone label (ex: API-V0.0.2 -> v0.0.2)
           milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
-          echo "milestone_label=$milestone_label"
+          echo "✅ milestone_label=$milestone_label ✅"
 
+          # get milestone number from milestone label (ex: v0.0.2 -> 1)
           milestone_number=$(curl -L -H "Accept: application/vnd.github+json"  -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/maatth/GitHubActionsTriggers/milestones | jq --arg milestone_label "$milestone_label" '.[] | select(.title == $milestone_label).number')
-          echo "milestone_number=$milestone_number"
+          echo "✅ milestone_number=$milestone_number ✅"
 
+          # get pull request number from pull request title prefix (ex: CE-4001 -> 1)
           pull_request_number=$(curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/maatth/GitHubActionsTriggers/pulls | jq --arg title_prefix "${{ github.event.inputs.pull_request_title_prefix }}" '.[] | select(.title | contains($title_prefix)).number');
-          echo "pull_request_number=$pull_request_number"
+          echo "✅ pull_request_number=$pull_request_number ✅"
           
+          # modify the milestone of the pull request
+          echo "::set-output name=milestone_number::$milestone_number"
           curl -u ${{ secrets.GITHUB_USER }}:${{ secrets.GITHUB_TOKEN }} -X PATCH -d "{\"milestone\": \"$milestone_number\"}" https://api.github.com/repos/maatth/GitHubActionsTriggers/issues/$pull_request_number;
 
 
