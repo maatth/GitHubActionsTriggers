@@ -35,7 +35,7 @@ jobs:
         run: echo Hello, world!
 
       - name: Run a one-line script
-        run: echo pull_request_title_prefix: ${{ github.event.inputs.pull_request_title_prefix }}
+        run: echo pull_request_title_prefix= ${{ github.event.inputs.pull_request_title_prefix }}
 
       - name: 'Convert JIRA ticket version to Github milestone number'
         id: convert-milestone-number
