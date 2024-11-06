@@ -23,26 +23,8 @@ jobs:
       # Checks-out our repository under $GITHUB_WORKSPACE, so this job can access it
       - uses: actions/checkout@v4
 
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      - name: Run a one-line script
-        run: echo pull_request_title_prefix= ${{ github.event.inputs.pull_request_title_prefix }} version= ${{ github.event.inputs.version }}
-
-      - name: Run a one-line script
-        run: toto='toto1'
-
-      - name: Run a one-line script
-        run: echo yooo $toto
-
-      - name: Run a one-line script
-        run: echo "::debug file=app.js,line=1::Missing semicolon"
-
-      - name: Run a one-line script
-        run: echo "::warning file=app.js,line=1::Missing semicolon"
-
-      - name: Run a one-line script
-        run: echo "::notice file=app.js,line=1::Missing semicolon"
+      - name: Inputs displays
+        run: echo "::notice title=Workflow ran with these inputs:: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
 
       - name: 'Convert JIRA ticket version to Github milestone number'
         id: convert-milestone-number
