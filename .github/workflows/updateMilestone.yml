@@ -1,41 +1,48 @@
-# This is a basic workflow to help you get started with Actions
+name: Update pull request milestone from Jira issue version
 
-name: Mon workflow pour update les milestones
-
-# Controls when the workflow will run
 on:
-  # Allows you to run this workflow manually from the Actions tab
+  # workflow_dispatch will allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       pull_request_title_prefix:
         description: 'Specify the pull request key prefix (ex: CE-4001)'
         required: true
       version:
-        description: 'Specify the Jira ticket version to update (ex: v0.0.2)'
+        description: 'Specify the Jira ticket version to update (ex: API-V0.0.2)'
         required: true
 
 permissions:
   contents: write
   pull-requests: write
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks-out our repository under $GITHUB_WORKSPACE, so this job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
       - name: Run a one-line script
         run: echo Hello, world!
 
       - name: Run a one-line script
-        run: echo pull_request_title_prefix= ${{ github.event.inputs.pull_request_title_prefix }}
+        run: echo pull_request_title_prefix= ${{ github.event.inputs.pull_request_title_prefix }} version= ${{ github.event.inputs.version }}
+
+      - name: Run a one-line script
+        run: toto='toto1'
+
+      - name: Run a one-line script
+        run: echo yooo $toto
+
+      - name: Run a one-line script
+        run: echo "::debug file=app.js,line=1::Missing semicolon"
+
+      - name: Run a one-line script
+        run: echo "::warning file=app.js,line=1::Missing semicolon"
+
+      - name: Run a one-line script
+        run: echo "::notice file=app.js,line=1::Missing semicolon"
 
       - name: 'Convert JIRA ticket version to Github milestone number'
         id: convert-milestone-number
