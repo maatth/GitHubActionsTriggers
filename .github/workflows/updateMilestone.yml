@@ -24,7 +24,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Inputs displays
-        run: echo "::notice title=Workflow ran with these inputs:: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
+        run: | 
+          echo "::notice title={Workflow ran with these inputs} :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
+          echo "::notice file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
 
       - name: 'Convert JIRA ticket version to Github milestone number'
         id: convert-milestone-number
