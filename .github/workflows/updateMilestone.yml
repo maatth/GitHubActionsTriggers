@@ -48,7 +48,7 @@ jobs:
 
           # Check if milestone_number is empty
           if [ -z "$milestone_number" ]; then
-            echo -e "\033[1;31m❌ Milestone not found.\033[0m"
+            echo -e "\033[1;31m... ❌ Milestone not found.\033[0m"
             exit 1
           fi
 
@@ -67,7 +67,7 @@ jobs:
 
           # Check if pull_request_number is empty
           if [ -z "$pull_request_number" ]; then
-            echo -e "\033[1;31m❌ Pull request not found.\033[0m"
+            echo -e "\033[1;31m... ❌ Pull request not found.\033[0m"
             exit 1
           fi
 
