@@ -26,18 +26,16 @@ jobs:
         run: | 
           echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
 
-      - name: 'Convert JIRA ticket version to Github milestone number'
+      - name: 'Convert version to milestone label (ex: API-V0.0.2 -> v0.0.2)'
         run: |
-          echo -e "\033[1;33mConverting version to milestone label (ex: API-V0.0.2 -> v0.0.2)...\033[0m"
-
           milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
+
+          echo "milestone_label=$milestone_label" >> $GITHUB_ENV
 
           echo -e "\033[1;32m... ✅ milestone_label=$milestone_label\033[0m"
 
-          ###############################################################################################
-
-          echo -e "\033[1;33mGetting milestone number from milestone label (ex: v0.0.2 -> 1)...\033[0m"
-
+      - name: 'Getting milestone number from milestone label (ex: v0.0.2 -> 1)'
+        run: |
           milestone_number=$(\
           curl --silent -L \
           -H "Accept: application/vnd.github+json" \
@@ -52,12 +50,12 @@ jobs:
             exit 1
           fi
 
+          echo "milestone_number=$milestone_number" >> $GITHUB_ENV
+
           echo -e "\033[1;32m... ✅ milestone_number=$milestone_number\033[0m"
 
-          ###############################################################################################
-
-          echo -e "\033[1;33mGetting last open pull request number from pull request title prefix (ex: CE-4001 -> 1)...\033[0m"
-
+      - name: 'Get last open pull request number from pull request title prefix (ex: CE-4001 -> 1)'
+        run: |
           pull_request_number=$(curl --silent -L \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
@@ -71,12 +69,12 @@ jobs:
             exit 1
           fi
 
+          echo "pull_request_number=$pull_request_number" >> $GITHUB_ENV
+
           echo -e "\033[1;32m... ✅ pull_request_number=$pull_request_number\033[0m"
 
-          ###############################################################################################
-
-          echo -e "\033[1;33mModifing the milestone of the pull request...\033[0m"
-          
+      - name: 'Modify the milestone of the pull request'
+        run: |
           curl --silent -L \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
