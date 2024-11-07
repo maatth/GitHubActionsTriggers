@@ -27,27 +27,25 @@ jobs:
           echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
 
       - name: 'Convert JIRA ticket version to Github milestone number'
-        id: convert-to-milestone-number
         run: |
-          echo "Converting version to milestone label (ex: API-V0.0.2 -> v0.0.2)..."
+          echo "\033[1;33mConverting version to milestone label (ex: API-V0.0.2 -> v0.0.2)...\033[0m"
           milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
-          echo "... ✅ milestone_label=$milestone_label"
-          echo -e "\033[1;33m############################################\033[0m"
+          echo "... ✅ \033[0mmilestone_label=$milestone_label\033[0m"
 
-          echo "Getting milestone number from milestone label (ex: v0.0.2 -> 1)..."
+          echo "\033[1;33mGetting milestone number from milestone label (ex: v0.0.2 -> 1)...\033[0m"
           milestone_number=$(curl --silent -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/maatth/GitHubActionsTriggers/milestones | jq --arg milestone_label "$milestone_label" '.[] | select(.title == $milestone_label).number')
-          echo "... ✅ milestone_number=$milestone_number"
+          echo "... ✅ \033[0mmilestone_number=$milestone_number\033[0m"
 
-          echo "Getting last open pull request number from pull request title prefix (ex: CE-4001 -> 1)..."
+          echo "\033[1;33mGetting last open pull request number from pull request title prefix (ex: CE-4001 -> 1)...\033[0m"
           pull_request_number=$(curl --silent -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" \
           "https://api.github.com/repos/maatth/GitHubActionsTriggers/pulls?state=open&sort=created&direction=desc" | jq --arg title_prefix "${{ github.event.inputs.pull_request_title_prefix }}" '.[] | select(.title | contains($title_prefix)).number' | head -n 1);
-          echo "... ✅ pull_request_number=$pull_request_number"
+          echo "... ✅ \033[0mpull_request_number=$pull_request_number\033[0m"
 
-          echo "Modifing the milestone of the pull request..."
+          echo "\033[1;33mModifing the milestone of the pull request...\033[0m"
           curl --silent -u ${{ secrets.GITHUB_USER }}:${{ secrets.GITHUB_TOKEN }} -X PATCH -d "{\"milestone\": \"$milestone_number\"}" \
           https://api.github.com/repos/maatth/GitHubActionsTriggers/issues/$pull_request_number;
-          echo "... ✅ pull request milestone updated"
+          echo "... ✅ \033[0mpull request milestone updated\033[0m"
 
 
       # - name: Update GitHub PR Milestone
