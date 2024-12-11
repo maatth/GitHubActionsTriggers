@@ -1,0 +1,66 @@
+name: Close milestone from new Jira version
+
+on:
+  # workflow_dispatch allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Specify the Jira ticket version (ex: API-V0.0.2)'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inputs displays
+        run: | 
+          echo "::notice title=Workflow ran with this input: :: version=${{ github.event.inputs.version }}"
+
+      - name: 'Convert version to milestone label (ex: API-V0.0.2 -> v0.0.2)'
+        run: |
+          milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
+
+          echo "milestone_label=$milestone_label" >> $GITHUB_ENV
+
+          echo -e "\033[1;32m... ✅ milestone_label=$milestone_label\033[0m"
+
+      - name: 'Getting milestone number from milestone label (ex: v0.0.2 -> 1)'
+        run: |
+          milestone_number=$(\
+          curl --silent -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/maatth/GitHubActionsTriggers/milestones \
+          | jq --arg milestone_label "$milestone_label" '.[] | select(.title == $milestone_label).number')
+
+          # Check if milestone_number is empty
+          if [ -z "$milestone_number" ]; then
+            echo -e "\033[1;31m... ❌ Milestone not found.\033[0m"
+            exit 1
+          fi
+
+          echo "milestone_number=$milestone_number" >> $GITHUB_ENV
+
+          echo -e "\033[1;32m... ✅ milestone_number=$milestone_number\033[0m"
+
+      - name: 'Close the milestone'
+        run: |
+          curl -L \
+          -X PATCH \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/maatth/GitHubActionsTriggers/milestones/$milestone_number \
+          -d '{"state":"closed"}' \
+          --silent --fail --show-error
+
+          echo -e "\033[1;32m... ✅ pull request milestone updated\033[0m"
+          
