@@ -22,6 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set custom Git user
+        run: |
+          git config user.name "🤖 Bot du projet devadmin-script"
+          git config user.email "mon-bot@users.noreply.github.com"
+
       - name: Inputs displays
         run: | 
           echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
