@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set custom Git user
+        run: |
+          git config user.name "🤖 Bot du projet devadmin-script"
+          git config user.email "mon-bot@users.noreply.github.com"
+
       - name: Inputs displays
         env:
           TEST_MATTHIEU: ${{ secrets.TEST_MATTHIEU2 }}
