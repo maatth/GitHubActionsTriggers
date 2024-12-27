@@ -22,16 +22,82 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set custom Git user
-        run: |
-          git config user.name "🤖 Bot du projet devadmin-script"
-          git config user.email "mon-bot@users.noreply.github.com"
-
       - name: Inputs displays
         run: | 
           echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
 
+      - name: Set up input version
+        id: setup
+        run: echo "INPUT_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Get GitHub project name from jira version
+        id: get_project_name
+        run: |
+          if [[ "$INPUT_VERSION" == *"vNext"* ]]; then
+            echo -e "\033[1;31m... ❌ vNext version is ignored.\033[0m"
+            echo "is_cancelled=true" >> $GITHUB_ENV
+            exit 0
+          elif [[ "$INPUT_VERSION" == *"Admin"* ]]; then
+            echo "PROJECT_NAME=cleo-admin" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Bridge"* ]]; then
+            echo "PROJECT_NAME=cleo-admin-bridge" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"API"* ]]; then
+            echo "PROJECT_NAME=cleo-public-api " >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Opta-Feed"* ]]; then
+            echo "PROJECT_NAME=cleo-opta-feed-api" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Image-Handler"* ]]; then
+            echo "PROJECT_NAME=cleo-image-handler" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SC-STT"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-speech-to-text-simplecast" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Edito-Lambdas"* ]]; then
+            echo "PROJECT_NAME=cleo-edito-lambdas" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Data-Sport-API"* ]]; then
+            echo "PROJECT_NAME=cleo-data-sport-api" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Data-Collector-API"* ]]; then
+            echo "PROJECT_NAME=cleo-data-collector-api" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Bloc-Serviciel"* ]]; then
+            echo "PROJECT_NAME=cleo-site-serviciel" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Webhooks"* ]]; then
+            echo "PROJECT_NAME=cleo-webhooks" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SMNE"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-sitemap-news-evenements" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SME"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-sitemap-evenements" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SMC"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-sitemap-contenus-rubriques" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SMV"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-sitemap-videos" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"EPG"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-epg" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SC"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-simplecast" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"BC"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-brightcove" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"AFP"* ]]; then
+            echo "PROJECT_NAME=cleo-sf-afp" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"SLP"* ]]; then
+            echo "PROJECT_NAME=cleo-sfractus-layouts-pages" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Redirections"* ]]; then
+            echo "PROJECT_NAME=cleo-redirections" >> $GITHUB_ENV
+          elif [[ "$INPUT_VERSION" == *"Gracenote-JO"* ]]; then
+            echo "PROJECT_NAME=cleo-gracenote-jo" >> $GITHUB_ENV
+          else
+            echo "Error: No match found for the input version." >&2
+            exit 1
+          fi
+
+      - name: Display matched value
+        if: env.is_cancelled != 'true'
+        run: |
+          echo "The GitHub project name is: $PROJECT_NAME"
+
+      - name: Inputs displays
+        if: env.is_cancelled != 'true'
+        run: | 
+          echo "::notice title=Workflow ran with these inputs: :: pull_request_title_prefix=${{ github.event.inputs.pull_request_title_prefix }} and version=${{ github.event.inputs.version }}"
+
       - name: 'Convert version to milestone label (ex: API-V0.0.2 -> v0.0.2)'
+        if: env.is_cancelled != 'true'
         run: |
           milestone_label="v$(echo "${{ github.event.inputs.version }}" | sed 's/[^0-9.]//g')"
 
@@ -40,6 +106,7 @@ jobs:
           echo -e "\033[1;32m... ✅ milestone_label=$milestone_label\033[0m"
 
       - name: 'Getting milestone number from milestone label (ex: v0.0.2 -> 1)'
+        if: env.is_cancelled != 'true'
         run: |
           milestone_number=$(\
           curl --silent -L \
@@ -60,32 +127,40 @@ jobs:
           echo -e "\033[1;32m... ✅ milestone_number=$milestone_number\033[0m"
 
       - name: 'Get last open pull request number from pull request title prefix (ex: CE-4001 -> 1)'
+        if: env.is_cancelled != 'true'
         run: |
-          pull_request_number=$(curl --silent -L \
+          pull_request_numbers=$(curl --silent -L \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           "https://api.github.com/repos/maatth/GitHubActionsTriggers/pulls?state=open&sort=created&direction=desc" \
-          | jq --arg title_prefix "${{ github.event.inputs.pull_request_title_prefix }}" '.[] | select(.title | contains($title_prefix)).number' | head -n 1);
+          | jq --arg title_prefix "${{ github.event.inputs.pull_request_title_prefix }}" '[.[] | select(.title | contains($title_prefix)) | .number]');
 
-          # Check if pull_request_number is empty
-          if [ -z "$pull_request_number" ]; then
+          echo $pull_request_numbers
+
+          # Check if pull_request_numbers is empty
+          if [ -z "$pull_request_numbers" ] || [ "$pull_request_numbers" = "[]" ]; then
             echo -e "\033[1;31m... ❌ Pull request not found.\033[0m"
-            exit 1
+            echo "is_cancelled=true" >> $GITHUB_ENV
+            exit 0
           fi
 
-          echo "pull_request_number=$pull_request_number" >> $GITHUB_ENV
+          echo "pull_request_numbers=$(echo $pull_request_numbers | jq -c)" >> $GITHUB_ENV # Needs to be be serialized before be put in env variable
 
-          echo -e "\033[1;32m... ✅ pull_request_number=$pull_request_number\033[0m"
+          echo -e "\033[1;32m... ✅ pull_request_numbers=$pull_request_numbers\033[0m"
 
       - name: 'Modify the milestone of the pull request'
+        if: env.is_cancelled != 'true'
         run: |
-          curl --silent -L \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          -X PATCH \
-          -d "{\"milestone\": \"$milestone_number\"}" \
-          https://api.github.com/repos/maatth/GitHubActionsTriggers/issues/$pull_request_number;  # Have to use '/issues/' instead of '/pulls/'
+          pull_request_numbers=$(echo "$pull_request_numbers" | jq -c) # parse it back
+          for pr_number in $(echo $pull_request_numbers | jq -r '.[]'); do
+            curl --silent -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -X PATCH \
+            -d "{\"milestone\": \"$milestone_number\"}" \
+            https://api.github.com/repos/maatth/GitHubActionsTriggers/issues/$pr_number;  # Have to use '/issues/' instead of '/pulls/'
 
-          echo -e "\033[1;32m... ✅ pull request milestone updated\033[0m"
+            echo -e "\033[1;32m... ✅ milestone updated for pull request #$pr_number\033[0m"
+          done
